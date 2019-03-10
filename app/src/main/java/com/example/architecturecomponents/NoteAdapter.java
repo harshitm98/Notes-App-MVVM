@@ -1,6 +1,8 @@
 package com.example.architecturecomponents;
 
 import android.support.annotation.NonNull;
+import android.support.v7.recyclerview.extensions.ListAdapter;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,10 +12,30 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
+public class NoteAdapter extends ListAdapter<Note, NoteAdapter.NoteHolder> {
 
-    private List<Note> notes = new ArrayList<>();
     private OnItemClickListener listener;
+
+    // Implemented ListAdapter (instead of previously used Adapter) so that we can use
+    // DiffUtil which when if the adapter is updated with change, it finds out at which
+    // position change is happened.
+    public NoteAdapter() {
+        super(DIFF_CALLBACK);
+    }
+
+    private static final DiffUtil.ItemCallback<Note> DIFF_CALLBACK = new DiffUtil.ItemCallback<Note>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull Note note, @NonNull Note t1) {
+            return note.getId() == t1.getId();
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull Note note, @NonNull Note t1) {
+            return note.getTitle().equals(t1) &&
+                    note.getDescription().equals(t1) &&
+                    note.getPriority() == t1.getPriority();
+        }
+    };
 
     @NonNull
     @Override
@@ -25,24 +47,26 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull NoteHolder noteHolder, int i) {
-        Note currentNote = notes.get(i);
+        Note currentNote = getItem(i);
         noteHolder.textViewTitle.setText(currentNote.getTitle());
         noteHolder.textViewDescription.setText(currentNote.getDescription());
         noteHolder.textViewPriority.setText(String.valueOf(currentNote.getPriority()));
     }
 
-    @Override
-    public int getItemCount() {
-        return notes.size();
-    }
+    // ListAdapter takes care of it
+//    @Override
+//    public int getItemCount() {
+//        return notes.size();
+//    }
 
-    public void setNotes(List<Note> notes) {
-        this.notes = notes;
-        notifyDataSetChanged();
-    }
+//    public void setNotes(List<Note> notes) {
+//        this.notes = notes;
+//        // When dataset changed, this is called to update
+//        notifyDataSetChanged();
+//    }
 
     public Note getNoteAt(int position) {
-        return notes.get(position);
+        return getItem(position);
     }
 
     class NoteHolder extends RecyclerView.ViewHolder {
@@ -60,7 +84,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
                 public void onClick(View v) {
                     int position = getAdapterPosition();
                     if (listener != null && position != RecyclerView.NO_POSITION) {
-                        listener.onItemClick(notes.get(position));
+                        listener.onItemClick(getItem(position));
                     }
                 }
             });
